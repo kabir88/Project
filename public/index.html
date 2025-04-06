@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NBA Stats Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+    }
+    
+    header {
+      background-color: #1d428a;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+    
+    main {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    footer {
+      background-color: #1d428a;
+      color: white;
+      text-align: center;
+      padding: 1rem;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+    }
+    
+    .search-container {
+      margin-bottom: 2rem;
+    }
+    
+    input[type="text"] {
+      width: 70%;
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+    
+    button {
+      padding: 0.5rem 1rem;
+      background-color: #c8102e;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    
+    .player-list {
+      list-style: none;
+      padding: 0;
+    }
+    
+    .player-item {
+      padding: 0.5rem;
+      border-bottom: 1px solid #ddd;
+      cursor: pointer;
+    }
+    
+    .player-item:hover {
+      background-color: #f5f5f5;
+    }
+    
+    .player-details {
+      margin-top: 2rem;
+      border: 1px solid #ddd;
+      padding: 1rem;
+      border-radius: 5px;
+      display: none;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    
+    .stat-card {
+      border: 1px solid #ddd;
+      padding: 1rem;
+      border-radius: 5px;
+      background-color: #f9f9f9;
+    }
+    
+    .prediction-card {
+      margin-top: 1rem;
+      border: 1px solid #ddd;
+      padding: 1rem;
+      border-radius: 5px;
+      background-color: #f5f5ff;
+    }
+    
+    /* Navigation Tabs */
+    .nav-tabs {
+      display: flex;
+      border-bottom: 1px solid #ddd;
+      margin-bottom: 2rem;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+    }
+    
+    .tab-button {
+      background-color: #f8f8f8;
+      border: 1px solid #ddd;
+      border-bottom: none;
+      padding: 0.75rem 1rem;
+      margin-right: 0.5rem;
+      cursor: pointer;
+      border-top-left-radius: 5px;
+      border-top-right-radius: 5px;
+      color: #444;
+      font-weight: bold;
+    }
+    
+    .tab-button.active {
+      background-color: #1d428a;
+      color: white;
+      border-color: #1d428a;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    /* Player Comparison Styles */
+    .comparison-container {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+    
+    .comparison-inputs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      justify-content: space-between;
+    }
+    
+    .player-select {
+      flex: 1;
+      min-width: 280px;
+    }
+    
+    .comparison-results {
+      margin-top: 0.5rem;
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      display: none;
+    }
+    
+    .comparison-results.active {
+      display: block;
+    }
+    
+    .player-selection {
+      margin-top: 1rem;
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      min-height: 60px;
+      background-color: #f9f9f9;
+    }
+    
+    .compare-button {
+      background-color: #c8102e;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 1rem;
+      align-self: center;
+    }
+    
+    .compare-button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    
+    .comparison-stats {
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 1rem;
+      background-color: #f9f9f9;
+    }
+    
+    #comparison-table {
+      width: 100%;
+      overflow-x: auto;
+    }
+    
+    /* Top Players Styles */
+    .top-players-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .top-players-filters {
+      margin-bottom: 1rem;
+    }
+    
+    .top-players-filters select {
+      padding: 0.5rem;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+    }
+    
+    .top-player-card {
+      display: flex;
+      align-items: center;
+      padding: 1rem;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      margin-bottom: 0.75rem;
+      background-color: #fff;
+    }
+    
+    .top-player-rank {
+      font-size: 1.5rem;
+      font-weight: bold;
+      min-width: 40px;
+      color: #1d428a;
+    }
+    
+    .top-player-info {
+      flex: 1;
+    }
+    
+    .top-player-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+    
+    .top-player-stat {
+      text-align: center;
+      min-width: 80px;
+    }
+    
+    .stat-value {
+      font-size: 1.25rem;
+      font-weight: bold;
+      color: #c8102e;
+    }
+    
+    .stat-label {
+      font-size: 0.8rem;
+      color: #666;
+    }
+    
+    /* MVP Prediction Styles */
+    .mvp-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    
+    .mvp-explanation {
+      background-color: #f0f8ff;
+      padding: 1rem;
+      border-radius: 5px;
+      border-left: 4px solid #1d428a;
+    }
+    
+    .mvp-candidates {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      justify-content: space-around;
+    }
+    
+    .mvp-card {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 1.5rem;
+      width: 280px;
+      text-align: center;
+      background-color: white;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+    
+    .mvp-rank {
+      position: absolute;
+      top: -15px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #c8102e;
+      color: white;
+      width: 30px;
+      height: 30px;
+      line-height: 30px;
+      border-radius: 50%;
+      font-weight: bold;
+    }
+    
+    .mvp-name {
+      font-size: 1.4rem;
+      font-weight: bold;
+      margin-top: 0.5rem;
+    }
+    
+    .mvp-team {
+      color: #666;
+    }
+    
+    .mvp-score {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #1d428a;
+      margin: 1rem 0;
+    }
+    
+    .mvp-stats {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 1rem;
+    }
+    
+    .mvp-stat {
+      text-align: center;
+    }
+    
+    .mvp-trend {
+      font-weight: bold;
+    }
+    
+    .mvp-trend.rising {
+      color: green;
+    }
+    
+    .mvp-trend.steady {
+      color: #1d428a;
+    }
+    
+    .mvp-trend.falling {
+      color: #c8102e;
+    }
+    
+    /* Model Effectiveness Styles */
+    .model-effectiveness-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .models-explanation {
+      margin-bottom: 1.5rem;
+    }
+    
+    .model-tabs {
+      display: flex;
+      border-bottom: 1px solid #ddd;
+      margin: 1rem 0;
+    }
+    
+    .model-tab-button {
+      background-color: transparent;
+      border: none;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      color: #444;
+    }
+    
+    .model-tab-button.active {
+      font-weight: bold;
+      color: #1d428a;
+      border-bottom: 3px solid #1d428a;
+    }
+    
+    .model-content {
+      display: none;
+      padding: 1rem;
+      background-color: #f9f9f9;
+      border-radius: 5px;
+    }
+    
+    .model-content.active {
+      display: block;
+    }
+    
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    
+    .metric-card {
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 1rem;
+      text-align: center;
+    }
+    
+    .metric-value {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #1d428a;
+      margin: 0.5rem 0;
+    }
+    
+    .metric-label {
+      color: #666;
+      font-size: 0.9rem;
+    }
+    
+    .performance-trend {
+      margin-top: 2rem;
+    }
+    
+    .comparison-metric {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      background-color: white;
+      padding: 1rem;
+      border-radius: 5px;
+      border: 1px solid #eee;
+    }
+    
+    .comparison-metric-label {
+      font-weight: bold;
+    }
+    
+    .comparison-bars {
+      display: flex;
+      flex: 1;
+      margin: 0 1rem;
+      height: 30px;
+      align-items: center;
+    }
+    
+    .rf-bar, .rl-bar {
+      height: 15px;
+      border-radius: 3px;
+    }
+    
+    .rf-bar {
+      background-color: #1d428a;
+      margin-right: 5px;
+    }
+    
+    .rl-bar {
+      background-color: #c8102e;
+      margin-left: 5px;
+    }
+    
+    .comparison-values {
+      display: flex;
+      gap: 1rem;
+      min-width: 100px;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #666;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .nav-tabs {
+        flex-wrap: wrap;
+      }
+      
+      .tab-button {
+        margin-bottom: 0.5rem;
+      }
+      
+      .comparison-inputs {
+        flex-direction: column;
+      }
+      
+      .comparison-stats,
+      .mvp-card {
+        width: 100%;
+      }
+      
+      .metrics-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .comparison-metric {
+        flex-direction: column;
+        text-align: center;
+      }
+      
+      .comparison-values {
+        margin-top: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>NBA Stats Dashboard</h1>
+  </header>
+  
+  <main>
+    <div class="nav-tabs">
+      <button class="tab-button active" data-tab="player-search">Player Search</button>
+      <button class="tab-button" data-tab="player-comparison">Player Comparison</button>
+      <button class="tab-button" data-tab="top-players">Top 10 Players</button>
+      <button class="tab-button" data-tab="mvp-prediction">MVP Prediction</button>
+      <button class="tab-button" data-tab="model-effectiveness">Model Effectiveness</button>
+    </div>
+    
+    <div class="tab-content active" id="player-search">
+      <div class="search-container">
+        <h2>Player Search</h2>
+        <input type="text" id="player-search-input" placeholder="Enter player name">
+        <button id="search-button">Search</button>
+      </div>
+      
+      <div id="search-results">
+        <h3>Results</h3>
+        <ul class="player-list" id="player-list"></ul>
+      </div>
+      
+      <div class="player-details" id="player-details">
+        <h2 id="player-name"></h2>
+        
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h3>Season Statistics</h3>
+            <div id="season-stats"></div>
+          </div>
+          
+          <div class="stat-card">
+            <h3>Performance Metrics</h3>
+            <div id="performance-metrics"></div>
+          </div>
+        </div>
+        
+        <div class="prediction-card">
+          <h3>ML Predictions</h3>
+          <p>Using Random Forest and Reinforcement Learning models</p>
+          <div id="predictions"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="tab-content" id="player-comparison">
+      <h2>Player Comparison</h2>
+      <div class="comparison-container">
+        <div class="comparison-inputs">
+          <div class="player-select">
+            <h3>Select First Player</h3>
+            <input type="text" id="player1-search" placeholder="Enter first player name">
+            <div id="player1-results" class="comparison-results">
+              <ul class="player-list" id="player1-list"></ul>
+            </div>
+            <div id="player1-selection" class="player-selection"></div>
+          </div>
+          
+          <div class="player-select">
+            <h3>Select Second Player</h3>
+            <input type="text" id="player2-search" placeholder="Enter second player name">
+            <div id="player2-results" class="comparison-results">
+              <ul class="player-list" id="player2-list"></ul>
+            </div>
+            <div id="player2-selection" class="player-selection"></div>
+          </div>
+          
+          <button id="compare-button" class="compare-button" disabled>Compare Players</button>
+        </div>
+        
+        <div id="comparison-results" class="comparison-stats">
+          <h3>Comparison Results</h3>
+          <div id="comparison-table"></div>
+          <div id="comparison-chart"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="tab-content" id="top-players">
+      <h2>Top 10 NBA Players</h2>
+      <div class="top-players-container">
+        <div class="top-players-filters">
+          <select id="top-players-filter">
+            <option value="points">Points Per Game</option>
+            <option value="rebounds">Rebounds Per Game</option>
+            <option value="assists">Assists Per Game</option>
+            <option value="field_goal">Field Goal %</option>
+            <option value="three_point">Three Point %</option>
+          </select>
+        </div>
+        
+        <div id="top-players-list" class="top-players-list">
+          <div class="loading">Loading top players...</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="tab-content" id="mvp-prediction">
+      <h2>MVP Prediction</h2>
+      <div class="mvp-container">
+        <div class="mvp-explanation">
+          <p>Our machine learning models analyze player performance, team success, and historical voting patterns to predict the most likely MVP candidates.</p>
+        </div>
+        
+        <div id="mvp-candidates" class="mvp-candidates">
+          <div class="loading">Loading MVP predictions...</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="tab-content" id="model-effectiveness">
+      <h2>Model Effectiveness</h2>
+      <div class="model-effectiveness-container">
+        <div class="models-explanation">
+          <p>Evaluation of our prediction models' accuracy and performance.</p>
+          
+          <div class="model-tabs">
+            <button class="model-tab-button active" data-model="random-forest">Random Forest</button>
+            <button class="model-tab-button" data-model="reinforcement-learning">Reinforcement Learning</button>
+            <button class="model-tab-button" data-model="comparison">Model Comparison</button>
+          </div>
+        </div>
+        
+        <div class="model-content active" id="random-forest">
+          <h3>Random Forest Model Performance</h3>
+          <div id="rf-metrics" class="model-metrics">
+            <div class="loading">Loading model metrics...</div>
+          </div>
+        </div>
+        
+        <div class="model-content" id="reinforcement-learning">
+          <h3>Reinforcement Learning Model Performance</h3>
+          <div id="rl-metrics" class="model-metrics">
+            <div class="loading">Loading model metrics...</div>
+          </div>
+        </div>
+        
+        <div class="model-content" id="comparison">
+          <h3>Model Comparison</h3>
+          <div id="model-comparison" class="model-comparison">
+            <div class="loading">Loading comparison data...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+  
+  <footer>
+    <p>NBA Stats Dashboard &copy; 2025</p>
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>
